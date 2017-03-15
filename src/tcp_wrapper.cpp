@@ -4,11 +4,12 @@
 
 typedef uint16_t tcp_port;
 
+
 /*
  * utils
  */
 
-void init_ipv4addr(const char* addr, tcp_port port, sockaddr_in& ipv4addr)
+void init_ipv4addr(const char *addr, tcp_port port, sockaddr_in &ipv4addr)
 {
 	ipv4addr.sin_family = AF_INET;
 	ipv4addr.sin_port = htons(port);
@@ -27,7 +28,7 @@ tcp_connection_socket::tcp_connection_socket(int sk)
 }
 
 
-void tcp_connection_socket::send(const void* buf, size_t size)
+void tcp_connection_socket::send(const void *buf, size_t size)
 {
 	std::unique_lock lock(mtx);
 
@@ -39,7 +40,7 @@ void tcp_connection_socket::send(const void* buf, size_t size)
 }
 
 
-void tcp_connection_socket::recv(void* buf, size_t size)
+void tcp_connection_socket::recv(void *buf, size_t size)
 {
 	std::unique_lock lock(mtx);
 
@@ -51,16 +52,26 @@ void tcp_connection_socket::recv(void* buf, size_t size)
 }
 
 
+void tcp_connection_socket::close()
+{
+	::close(sk);
+	closed = true;
+}
+
+
 tcp_connection_socket::~tcp_connection_socket()
 {
-	close(sk);
+	if (!closed) {
+		::close(sk);
+	}
 }
+
 
 /*
  * tcp_client_socket implementation
  */
 
-tcp_client_socket::tcp_client_socket(const char* addr, tcp_port port)
+tcp_client_socket::tcp_client_socket(const char *addr, tcp_port port)
 {
 	sk = socket(AF_INET, SOCK_STREAM, 0);
 	init_ipv4addr(addr, port, ipv4addr);
@@ -81,7 +92,7 @@ void tcp_client_socket::connect()
 		throw std::exception();
 	}
 
-	if (connect(sk, (sockaddr*) &ipv4addr, sizeof(ipv4addr)) < 0) {
+	if (connect(sk, (sockaddr *) &ipv4addr, sizeof(ipv4addr)) < 0) {
 		err_msg = "can't connect";
 		perror(err_msg);
 		throw std::exception();
@@ -89,7 +100,7 @@ void tcp_client_socket::connect()
 }
 
 
-void tcp_client_socket::send(const void* buf, size_t size)
+void tcp_client_socket::send(const void *buf, size_t size)
 {
 	std::unique_lock lock(mtx);
 
@@ -101,7 +112,7 @@ void tcp_client_socket::send(const void* buf, size_t size)
 }
 
 
-void tcp_client_socket::recv(void* buf, size_t size)
+void tcp_client_socket::recv(void *buf, size_t size)
 {
 	std::unique_lock lock(mtx);
 
@@ -123,14 +134,14 @@ tcp_client_socket::~tcp_client_socket()
  * tcp_server_socket implementation
  */
 
-tcp_server_socket::tcp_server_socket(const char* addr, tcp_port port)
+tcp_server_socket::tcp_server_socket(const char *addr, tcp_port port)
 {
 	sk = socket(AF_INET, SOCK_STREAM, 0);
 	init_ipv4addr(addr, port, ipv4addr);
 	err_msg = nullptr;
 
 	int optval = 1;
-	if (setsockopt(sk, SOL_SOCKET, SO_REUSEADDR, (void*) &optval, sizeof(int)) < 0) {
+	if (setsockopt(sk, SOL_SOCKET, SO_REUSEADDR, (void *) &optval, sizeof(int)) < 0) {
 		err_msg = "can't set SO_REUSEADDR";
 		perror(err_msg);
 		return;
@@ -149,6 +160,7 @@ tcp_server_socket::tcp_server_socket(const char* addr, tcp_port port)
 	}
 }
 
+
 stream_socket *tcp_server_socket::accept_one_client()
 {
 	std::unique_lock lock(mtx);
@@ -159,26 +171,36 @@ stream_socket *tcp_server_socket::accept_one_client()
 	}
 
 	socklen_t addrLen = sizeof(ipv4addr);
-	int client_sk = accept(sk, (sockaddr*) &ipv4addr, &addrLen);
-       
+	int client_sk = accept(sk, (sockaddr *) &ipv4addr, &addrLen);
+
 	if (client_sk < 0) {
 		err_msg = "can't accept";
 		perror(err_msg);
 		throw std::exception();
 	}
 
-	tcp_connection_socket* retSocket = new tcp_connection_socket(client_sk);
+	tcp_connection_socket *retSocket = new tcp_connection_socket(client_sk);
 	acceptedSockets.push_back(retSocket);
 
 	return (stream_socket *) retSocket;
 }
 
 
-tcp_server_socket::~tcp_server_socket()
+void tcp_server_socket::close()
 {
 	for (auto i = acceptedSockets.begin(); i != acceptedSockets.end(); ++i) {
-		delete *i;
+		i.->close();
 	}
 
-	close(sk);
+	::close(sk);
+
+	closed = true;
+}
+
+
+tcp_server_socket::~tcp_server_socket()
+{
+	if (!closed) {
+		close();
+	}
 }

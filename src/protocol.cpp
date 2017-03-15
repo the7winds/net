@@ -3,26 +3,26 @@
 #include <memory>
 
 
-static std::map<Body::BodyType, Serializable* (*) ()> constructorTable =
+static std::map<Body::BodyType, Serializable *(*)()> constructorTable =
 		{
-				{ Body::BodyType::AUTH_RESP, &AuthorisationResponse::generator },
-				{ Body::BodyType::LIST_LOTS_REQ, &ListLotsRequest::generator },
-				{ Body::BodyType::LIST_LOTS_RESP, &ListLotsResponse::generator },
-				{ Body::BodyType::LOT_DET_REQ, &LotDetailsRequest::generator },
-				{ Body::BodyType::LOT_DET_RESP, &LotDetailsResponse::generator },
-				{ Body::BodyType::CLOSE_LOT_REQ, &CloseLotRequest::generator },
-				{ Body::BodyType::CLOSE_LOT_RESP, &CloseLotResponse::generator }
+				{Body::BodyType::AUTH_RESP,      &AuthorisationResponse::generator},
+				{Body::BodyType::LIST_LOTS_REQ,  &ListLotsRequest::generator},
+				{Body::BodyType::LIST_LOTS_RESP, &ListLotsResponse::generator},
+				{Body::BodyType::LOT_DET_REQ,    &LotDetailsRequest::generator},
+				{Body::BodyType::LOT_DET_RESP,   &LotDetailsResponse::generator},
+				{Body::BodyType::CLOSE_LOT_REQ,  &CloseLotRequest::generator},
+				{Body::BodyType::CLOSE_LOT_RESP, &CloseLotResponse::generator}
 		};
 
 
-void Packet::writeToStreamSocket(stream_socket &sk)
+void Packet::writeToStreamSocket(stream_socket *sk)
 {
 	send_uint((uint32_t) body->getType(), sk);
 	body->writeToStreamSocket(sk);
 }
 
 
-void Packet::readFromStreamSocket(stream_socket &sk)
+void Packet::readFromStreamSocket(stream_socket *sk)
 {
 	uint32_t t32;
 
@@ -34,45 +34,45 @@ void Packet::readFromStreamSocket(stream_socket &sk)
 }
 
 
-void AuthorisationResponse::writeToStreamSocket(stream_socket &sk)
+void AuthorisationResponse::writeToStreamSocket(stream_socket *sk)
 {
 	send_uint(customerId, sk);
 }
 
 
-void AuthorisationResponse::readFromStreamSocket(stream_socket &sk)
+void AuthorisationResponse::readFromStreamSocket(stream_socket *sk)
 {
 	recv_uint(customerId, sk);
 }
 
 
-void NewLotRequest::writeToStreamSocket(stream_socket &sk)
+void NewLotRequest::writeToStreamSocket(stream_socket *sk)
 {
 	send_string(description, sk);
 	send_uint(startPrice, sk);
 }
 
 
-void NewLotRequest::readFromStreamSocket(stream_socket &sk)
+void NewLotRequest::readFromStreamSocket(stream_socket *sk)
 {
 	description = recv_string(sk);
 	recv_uint(startPrice, sk);
 }
 
 
-void NewLotResponse::writeToStreamSocket(stream_socket &sk)
+void NewLotResponse::writeToStreamSocket(stream_socket *sk)
 {
 	send_bool(accepted, sk);
 }
 
 
-void NewLotResponse::readFromStreamSocket(stream_socket &sk)
+void NewLotResponse::readFromStreamSocket(stream_socket *sk)
 {
 	recv_bool(accepted, sk);
 }
 
 
-void ListLotsResponse::writeToStreamSocket(stream_socket &sk)
+void ListLotsResponse::writeToStreamSocket(stream_socket *sk)
 {
 	send_uint((uint32_t) lotsInfo.size(), sk);
 
@@ -86,7 +86,7 @@ void ListLotsResponse::writeToStreamSocket(stream_socket &sk)
 }
 
 
-void ListLotsResponse::readFromStreamSocket(stream_socket &sk)
+void ListLotsResponse::readFromStreamSocket(stream_socket *sk)
 {
 	uint32_t lotsInfoSize;
 
@@ -111,7 +111,7 @@ void ListLotsResponse::readFromStreamSocket(stream_socket &sk)
 }
 
 
-void MakeBetRequest::writeToStreamSocket(stream_socket &sk)
+void MakeBetRequest::writeToStreamSocket(stream_socket *sk)
 {
 	send_uint(bet.productId, sk);
 	send_uint(bet.customerId, sk);
@@ -119,7 +119,7 @@ void MakeBetRequest::writeToStreamSocket(stream_socket &sk)
 }
 
 
-void MakeBetRequest::readFromStreamSocket(stream_socket &sk)
+void MakeBetRequest::readFromStreamSocket(stream_socket *sk)
 {
 	recv_uint(bet.productId, sk);
 	recv_uint(bet.customerId, sk);
@@ -127,19 +127,19 @@ void MakeBetRequest::readFromStreamSocket(stream_socket &sk)
 }
 
 
-void MakeBetResponse::writeToStreamSocket(stream_socket &sk)
+void MakeBetResponse::writeToStreamSocket(stream_socket *sk)
 {
 	send_bool(accepted, sk);
 }
 
 
-void MakeBetResponse::readFromStreamSocket(stream_socket &sk)
+void MakeBetResponse::readFromStreamSocket(stream_socket *sk)
 {
 	recv_bool(accepted, sk);
 }
 
 
-void LotDetailsResponse::writeToStreamSocket(stream_socket &sk)
+void LotDetailsResponse::writeToStreamSocket(stream_socket *sk)
 {
 	send_uint(lotDetails.lotId, sk);
 	send_bool(lotDetails.opened, sk);
@@ -155,7 +155,7 @@ void LotDetailsResponse::writeToStreamSocket(stream_socket &sk)
 }
 
 
-void LotDetailsResponse::readFromStreamSocket(stream_socket &sk)
+void LotDetailsResponse::readFromStreamSocket(stream_socket *sk)
 {
 	uint32_t lotId;
 	bool opened;
@@ -185,23 +185,25 @@ void LotDetailsResponse::readFromStreamSocket(stream_socket &sk)
 }
 
 
-void CloseLotRequest::writeToStreamSocket(stream_socket &sk)
+void CloseLotRequest::writeToStreamSocket(stream_socket *sk)
 {
 	send_uint(lotId, sk);
 }
 
-void CloseLotRequest::readFromStreamSocket(stream_socket &sk)
+
+void CloseLotRequest::readFromStreamSocket(stream_socket *sk)
 {
 	recv_uint(lotId, sk);
 }
 
 
-void CloseLotResponse::writeToStreamSocket(stream_socket &sk)
+void CloseLotResponse::writeToStreamSocket(stream_socket *sk)
 {
 	send_bool(closed, sk);
 }
 
-void CloseLotResponse::readFromStreamSocket(stream_socket &sk)
+
+void CloseLotResponse::readFromStreamSocket(stream_socket *sk)
 {
 	send_bool(closed, sk);
 }

@@ -12,8 +12,9 @@
 class Serializable
 {
 public:
-	virtual void writeToStreamSocket(stream_socket &sk) = 0;
-	virtual void readFromStreamSocket(stream_socket &sk) = 0;
+	virtual void writeToStreamSocket(stream_socket *sk) = 0;
+
+	virtual void readFromStreamSocket(stream_socket *sk) = 0;
 };
 
 
@@ -21,6 +22,8 @@ class Body : Serializable
 {
 public:
 	virtual BodyType getType() = 0;
+
+	virtual void accept(Visitor *visitor) = 0;
 
 	enum BodyType
 	{
@@ -44,8 +47,11 @@ class Packet : Serializable
 	Body *body = nullptr;
 
 public:
-	void writeToStreamSocket(stream_socket &sk) override;
-	void readFromStreamSocket(stream_socket &sk) override;
+	Body getBody();
+
+	void writeToStreamSocket(stream_socket *sk) override;
+
+	void readFromStreamSocket(stream_socket *sk) override;
 };
 
 
@@ -54,14 +60,18 @@ class AuthorisationResponse : Body
 	uint32_t customerId;
 
 public:
-	BodyType getType() override {
+	BodyType getType() override
+	{
 		return AUTH_RESP;
 	};
 
-	void writeToStreamSocket(stream_socket &sk) override;
-	void readFromStreamSocket(stream_socket &sk) override;
+	void writeToStreamSocket(stream_socket *sk) override;
 
-	static Serializable* generator() {
+	void readFromStreamSocket(stream_socket *sk) override;
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new AuthorisationResponse();
 	}
 };
@@ -73,14 +83,18 @@ class NewLotRequest : Body
 	uint32_t startPrice;
 
 public:
-	BodyType getType() override {
+	BodyType getType() override
+	{
 		return NEW_LOT_REQ;
 	};
 
-	void writeToStreamSocket(stream_socket &sk) override;
-	void readFromStreamSocket(stream_socket &sk) override;
+	void writeToStreamSocket(stream_socket *sk) override;
 
-	static Serializable* generator() {
+	void readFromStreamSocket(stream_socket *sk) override;
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new NewLotRequest();
 	}
 };
@@ -91,14 +105,18 @@ class NewLotResponse : Body
 	bool accepted;
 
 public:
-	BodyType getType() override {
+	BodyType getType() override
+	{
 		return NEW_LOT_RESP;
 	};
 
-	void writeToStreamSocket(stream_socket &sk) override;
-	void readFromStreamSocket(stream_socket &sk) override;
+	void writeToStreamSocket(stream_socket *sk) override;
 
-	static Serializable* generator() {
+	void readFromStreamSocket(stream_socket *sk) override;
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new NewLotResponse();
 	}
 };
@@ -111,6 +129,7 @@ struct LotShortInfo
 	std::string description;
 	uint32_t startPrice;
 	uint32_t bestPrice;
+
 
 	LotShortInfo(uint32_t lotId, bool opened, uint32_t startPrice, uint32_t bestPrice, std::string description)
 	{
@@ -126,14 +145,22 @@ struct LotShortInfo
 class ListLotsRequest : Body
 {
 public:
-	BodyType getType() override {
+	BodyType getType() override
+	{
 		return LIST_LOTS_REQ;
 	}
 
-	void writeToStreamSocket(stream_socket &sk) override {}
-	void readFromStreamSocket(stream_socket &sk) override {}
 
-	static Serializable* generator() {
+	void writeToStreamSocket(stream_socket *sk) override
+	{}
+
+
+	void readFromStreamSocket(stream_socket *sk) override
+	{}
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new ListLotsRequest();
 	}
 };
@@ -144,14 +171,19 @@ class ListLotsResponse : Body
 	std::list<LotShortInfo> lotsInfo;
 
 public:
-	BodyType getType() {
+	BodyType getType()
+	{
 		return BodyType::LIST_LOTS_RESP;
 	}
 
-	void writeToStreamSocket(stream_socket &sk) override;
-	void readFromStreamSocket(stream_socket &sk) override;
 
-	static Serializable* generator() {
+	void writeToStreamSocket(stream_socket *sk) override;
+
+	void readFromStreamSocket(stream_socket *sk) override;
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new ListLotsResponse();
 	}
 };
@@ -162,6 +194,7 @@ struct Bet
 	uint32_t productId;
 	uint32_t customerId;
 	uint32_t newPrice;
+
 
 	Bet(uint32_t productId, uint32_t customerId, uint32_t newPrice)
 	{
@@ -177,14 +210,19 @@ class MakeBetRequest : Body
 	Bet bet;
 
 public:
-	BodyType getType() {
+	BodyType getType()
+	{
 		return MAKE_BET_REQ;
 	}
 
-	void writeToStreamSocket(stream_socket &sk) override;
-	void readFromStreamSocket(stream_socket &sk) override;
 
-	static Serializable* generator() {
+	void writeToStreamSocket(stream_socket *sk) override;
+
+	void readFromStreamSocket(stream_socket *sk) override;
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new MakeBetRequest();
 	}
 };
@@ -195,14 +233,19 @@ class MakeBetResponse : Body
 	bool accepted;
 
 public:
-	BodyType getType() {
+	BodyType getType()
+	{
 		return MAKE_BET_RESP;
 	}
 
-	void writeToStreamSocket(stream_socket &sk) override;
-	void readFromStreamSocket(stream_socket &sk) override;
 
-	static Serializable* generator() {
+	void writeToStreamSocket(stream_socket *sk) override;
+
+	void readFromStreamSocket(stream_socket *sk) override;
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new MakeBetResponse();
 	}
 };
@@ -217,7 +260,9 @@ struct LotFullInfo
 	uint32_t startPrice;
 	std::list<Bet> bets;
 
-	LotFullInfo(uint32_t lotId, uint32_t ownerId, bool opened, std::string description, uint32_t startPrice, std::list<Bet> &bets)
+
+	LotFullInfo(uint32_t lotId, uint32_t ownerId, bool opened, std::string description, uint32_t startPrice,
+	            std::list<Bet> &bets)
 	{
 		this->lotId = lotId;
 		this->ownerId = ownerId;
@@ -232,14 +277,22 @@ struct LotFullInfo
 class LotDetailsRequest : Body
 {
 public:
-	BodyType getType() {
+	BodyType getType()
+	{
 		return LOT_DET_REQ;
 	}
 
-	void writeToStreamSocket(stream_socket &sk) override {}
-	void readFromStreamSocket(stream_socket &sk) override {}
 
-	static Serializable* generator() {
+	void writeToStreamSocket(stream_socket *sk) override
+	{}
+
+
+	void readFromStreamSocket(stream_socket *sk) override
+	{}
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new LotDetailsRequest();
 	}
 };
@@ -250,14 +303,19 @@ class LotDetailsResponse : Body
 	LotFullInfo lotDetails;
 
 public:
-	BodyType getType() {
+	BodyType getType()
+	{
 		return LOT_DET_RESP;
 	}
 
-	void writeToStreamSocket(stream_socket &sk) override;
-	void readFromStreamSocket(stream_socket &sk) override;
 
-	static Serializable* generator() {
+	void writeToStreamSocket(stream_socket *sk) override;
+
+	void readFromStreamSocket(stream_socket *sk) override;
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new LotDetailsResponse();
 	}
 };
@@ -268,14 +326,19 @@ class CloseLotRequest : Body
 	uint32_t lotId;
 
 public:
-	BodyType getType() {
+	BodyType getType()
+	{
 		return CLOSE_LOT_REQ;
 	}
 
-	void writeToStreamSocket(stream_socket &sk) override;
-	void readFromStreamSocket(stream_socket &sk) override;
 
-	static Serializable* generator() {
+	void writeToStreamSocket(stream_socket *sk) override;
+
+	void readFromStreamSocket(stream_socket *sk) override;
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new CloseLotRequest();
 	}
 };
@@ -286,14 +349,31 @@ class CloseLotResponse : Body
 	bool closed;
 
 public:
-	BodyType getType() {
+	BodyType getType()
+	{
 		return CLOSE_LOT_RESP;
 	}
 
-	void writeToStreamSocket(stream_socket &sk) override;
-	void readFromStreamSocket(stream_socket &sk) override;
 
-	static Serializable* generator() {
+	void writeToStreamSocket(stream_socket *sk) override;
+
+	void readFromStreamSocket(stream_socket *sk) override;
+
+
+	static Serializable *generator()
+	{
 		return (Serializable *) new CloseLotResponse();
 	}
+};
+
+
+class Visitor
+{
+	virtual void visit(CloseLotRequest *request, void *) = 0;
+
+	virtual void visit(LotDetailsRequest *request, void *) = 0;
+
+	virtual void visit(ListLotsRequest *request, void *) = 0;
+
+	virtual void visit(MakeBetRequest *request, void *) = 0;
 };
