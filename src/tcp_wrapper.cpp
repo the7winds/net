@@ -167,6 +167,18 @@ stream_socket *tcp_server_socket::accept_one_client()
 		throw std::exception();
 	}
 
-	return (stream_socket *) new tcp_connection_socket(client_sk);
+	tcp_connection_socket* retSocket = new tcp_connection_socket(client_sk);
+	acceptedSockets.push_back(retSocket);
+
+	return (stream_socket *) retSocket;
 }
 
+
+tcp_server_socket::~tcp_server_socket()
+{
+	for (auto i = acceptedSockets.begin(); i != acceptedSockets.end(); ++i) {
+		delete *i;
+	}
+
+	close(sk);
+}

@@ -8,6 +8,7 @@
 #include <exception>
 #include <mutex>
 #include <netinet/in.h>
+#include <list>
 
 
 class tcp_connection_socket : stream_socket
@@ -50,8 +51,10 @@ class tcp_server_socket : stream_server_socket
 	const char* err_msg = nullptr;
 	std::mutex mtx;
 	sockaddr_in ipv4addr;
+	std::list<tcp_connection_socket*> acceptedSockets;
 
 public:
 	tcp_server_socket(const char* addr, uint16_t port);
 	stream_socket *accept_one_client() override;
+	~tcp_server_socket() override;
 };
