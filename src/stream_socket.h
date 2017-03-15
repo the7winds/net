@@ -51,3 +51,4 @@ struct stream_server_socket
 };
 
 typedef const char* hostname;
+typedef uint16_t tcp_port;
