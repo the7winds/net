@@ -74,9 +74,9 @@ void NewLotResponse::readFromStreamSocket(stream_socket &sk)
 
 void ListLotsResponse::writeToStreamSocket(stream_socket &sk)
 {
-	send_uint((uint32_t) lotsInfo->size(), sk);
+	send_uint((uint32_t) lotsInfo.size(), sk);
 
-	for (auto i = lotsInfo->begin(); i != lotsInfo->end(); ++i) {
+	for (auto i = lotsInfo.begin(); i != lotsInfo.end(); ++i) {
 		send_uint(i.->lotId, sk);
 		send_bool(i.->opened, sk);
 		send_uint(i.->startPrice, sk);
@@ -105,7 +105,7 @@ void ListLotsResponse::readFromStreamSocket(stream_socket &sk)
 		recv_uint(bestPrice, sk);
 		description = recv_string(sk);
 
-		lotsInfo->push_back(new LotShortInfo(lotId, opened, startPrice, bestPrice, description));
+		lotsInfo.push_back(LotShortInfo(lotId, opened, startPrice, bestPrice, description));
 	}
 
 }
@@ -141,16 +141,16 @@ void MakeBetResponse::readFromStreamSocket(stream_socket &sk)
 
 void LotDetailsResponse::writeToStreamSocket(stream_socket &sk)
 {
-	send_uint(lotDetails->lotId, sk);
-	send_bool(lotDetails->opened, sk);
-	send_uint(lotDetails->ownerId, sk);
-	send_uint(lotDetails->startPrice, sk);
-	send_string(lotDetails->description, sk);
+	send_uint(lotDetails.lotId, sk);
+	send_bool(lotDetails.opened, sk);
+	send_uint(lotDetails.ownerId, sk);
+	send_uint(lotDetails.startPrice, sk);
+	send_string(lotDetails.description, sk);
 
-	send_uint((uint32_t) lotDetails->bets->size(), sk);
-	for (auto i = lotDetails->bets->begin(); i != lotDetails->bets->end(); ++i) {
-		send_uint(i.->customerId, sk);
-		send_uint(i.->newPrice, sk);
+	send_uint((uint32_t) lotDetails.bets.size(), sk);
+	for (auto i = lotDetails.bets.begin(); i != lotDetails.bets.end(); ++i) {
+		send_uint(i->customerId, sk);
+		send_uint(i->newPrice, sk);
 	}
 }
 
@@ -172,16 +172,16 @@ void LotDetailsResponse::readFromStreamSocket(stream_socket &sk)
 	uint32_t betsLen;
 	recv_uint(betsLen, sk);
 
-	std::list<Bet*> *bets = new std::list();
+	std::list<Bet> bets;
 	uint32_t customerId;
 	uint32_t newPrice;
 	for (uint32_t i = 0; i < betsLen; ++i) {
 		recv_uint(customerId, sk);
 		recv_uint(newPrice, sk);
-		bets->push_back(new Bet(lotId, customerId, newPrice));
+		bets.push_back(Bet(lotId, customerId, newPrice));
 	}
 
-	lotDetails = new LotFullInfo(lotId, ownerId, opened, description, startPrice, bets);
+	lotDetails = LotFullInfo(lotId, ownerId, opened, description, startPrice, bets);
 }
 
 

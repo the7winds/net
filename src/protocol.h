@@ -141,7 +141,7 @@ public:
 
 class ListLotsResponse : Body
 {
-	std::list<LotShortInfo*> *lotsInfo = nullptr;
+	std::list<LotShortInfo> lotsInfo;
 
 public:
 	BodyType getType() {
@@ -215,9 +215,9 @@ struct LotFullInfo
 	bool opened;
 	std::string description;
 	uint32_t startPrice;
-	std::list<Bet*> *bets = nullptr;
+	std::list<Bet> bets;
 
-	LotFullInfo(uint32_t lotId, uint32_t ownerId, bool opened, std::string description, uint32_t startPrice, std::list<Bet*> *bets = nullptr)
+	LotFullInfo(uint32_t lotId, uint32_t ownerId, bool opened, std::string description, uint32_t startPrice, std::list<Bet> &bets)
 	{
 		this->lotId = lotId;
 		this->ownerId = ownerId;
@@ -247,7 +247,7 @@ public:
 
 class LotDetailsResponse : Body
 {
-	LotFullInfo *lotDetails;
+	LotFullInfo lotDetails;
 
 public:
 	BodyType getType() {
