@@ -23,8 +23,6 @@ class Body : Serializable
 public:
 	virtual BodyType getType() = 0;
 
-	virtual void accept(Visitor *visitor) = 0;
-
 	enum BodyType
 	{
 		AUTH_RESP,
@@ -47,7 +45,10 @@ class Packet : Serializable
 	Body *body = nullptr;
 
 public:
-	Body getBody();
+	Body* getBody()
+	{
+		return body;
+	}
 
 	void writeToStreamSocket(stream_socket *sk) override;
 
@@ -364,16 +365,4 @@ public:
 	{
 		return (Serializable *) new CloseLotResponse();
 	}
-};
-
-
-class Visitor
-{
-	virtual void visit(CloseLotRequest *request, void *) = 0;
-
-	virtual void visit(LotDetailsRequest *request, void *) = 0;
-
-	virtual void visit(ListLotsRequest *request, void *) = 0;
-
-	virtual void visit(MakeBetRequest *request, void *) = 0;
 };
