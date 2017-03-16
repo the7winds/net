@@ -1,13 +1,13 @@
 #pragma once
 
 #include <cstddef>
+#include <cinttypes>
 
 /*
  * All the functions in the interface are blocking.
  */
 
-struct stream_socket
-{
+struct stream_socket {
     /*
      * Either sends all the data in buf or throws.
      * If exception is thrown then this socket would probably
@@ -19,6 +19,7 @@ struct stream_socket
      * - locking required;
      */
     virtual void send(const void *buf, size_t size) = 0;
+
     /*
      * Either reads size bytes of data into buf or throws.
      * Buf may be modified even if exception was thrown.
@@ -28,11 +29,11 @@ struct stream_socket
      * - locking required;
      */
     virtual void recv(void *buf, size_t size) = 0;
+
     virtual ~stream_socket() {};
 };
 
-struct stream_client_socket: stream_socket
-{
+struct stream_client_socket : stream_socket {
     /*
      * If exception is thrown then this socket would probably
      * throw them on all further connects.
@@ -40,15 +41,15 @@ struct stream_client_socket: stream_socket
     virtual void connect() = 0;
 };
 
-struct stream_server_socket
-{
+struct stream_server_socket {
     /*
      * If exception is thrown then this socket would probably
      * throw them on all further accepts.
      */
-    virtual stream_socket* accept_one_client() = 0;
+    virtual stream_socket *accept_one_client() = 0;
+
     virtual ~stream_server_socket() {};
 };
 
-typedef const char* hostname;
+typedef const char *hostname;
 typedef uint16_t tcp_port;
