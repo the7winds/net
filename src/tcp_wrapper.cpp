@@ -43,9 +43,8 @@ void tcp_connection_socket::close() {
 
 
 tcp_connection_socket::~tcp_connection_socket() {
-    if (!closed) {
+    if (!closed)
         ::close(sk);
-    }
 }
 
 

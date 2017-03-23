@@ -42,24 +42,22 @@ class TradeConnection {
 
 public:
     TradeConnection(stream_socket *sk, DataStorage *dataStorage) : sk(sk) {
-        context = Context(dataStorage->addNewUser(), dataStorage);
+        context = new Context(dataStorage->addNewUser(), dataStorage);
         handlerThread = std::thread(handleWrapper, this);
-        std::cerr << "created new connection CONNECTION_ID:" << context.getUid() << "\n";
+        std::cerr << "created new connection CONNECTION_ID:" << context->getUid() << "\n";
     }
 
-    void close();
+    ~TradeConnection() {
+        handlerThread.join();
+        delete context;
+    }
 
     class Context {
         uint32_t uid;
         DataStorage *dataStorage;
 
     public:
-        Context() {}
-
-        Context(uint32_t uid, DataStorage *dataStorage) {
-            this->uid = uid;
-            this->dataStorage = dataStorage;
-        }
+        Context(uint32_t uid, DataStorage *dataStorage) : uid(uid), dataStorage(dataStorage) {}
 
         uint32_t getUid() {
             return uid;
@@ -71,14 +69,14 @@ public:
     };
 
 private:
-    Context context;
+    Context *context;
 };
 
 
 class TradeServer {
     tcp_server_socket *serverSocket = nullptr;
     std::thread listenerThread;
-    std::list<TradeConnection> connections;
+    std::list<TradeConnection*> connections;
     DataStorage dataStorage;
 
     void listenConnection();

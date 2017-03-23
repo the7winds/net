@@ -11,6 +11,7 @@ static std::map<Body::BodyType, Serializable *(*)()> constructorTable =
                 {Body::BodyType::LIST_LOTS_RESP, &ListLotsResponse::generator},
                 {Body::BodyType::LOT_DET_REQ,    &LotDetailsRequest::generator},
                 {Body::BodyType::LOT_DET_RESP,   &LotDetailsResponse::generator},
+                {Body::BodyType::MAKE_BET_REQ,   &MakeBetRequest::generator},
                 {Body::BodyType::CLOSE_LOT_REQ,  &CloseLotRequest::generator},
                 {Body::BodyType::STATUS,         &Status::generator},
                 {Body::BodyType::BYE,            &Bye::generator}
@@ -28,6 +29,9 @@ void Packet::readFromStreamSocket(stream_socket *sk) {
 
     recv_uint(t32, sk);
     Body::BodyType bodyType = (Body::BodyType) t32;
+
+    if (body)
+        delete body;
 
     body = (Body *) constructorTable[bodyType]();
     body->readFromStreamSocket(sk);
@@ -228,7 +232,7 @@ void Status::writeToStreamSocket(stream_socket *sk) {
 
 
 void Status::readFromStreamSocket(stream_socket *sk) {
-    send_bool(status, sk);
+    recv_bool(status, sk);
 }
 
 bool Status::getStatus() {

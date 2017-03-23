@@ -69,8 +69,10 @@ struct LotFullInfo {
 
 
     uint32_t getBestPrice() const {
-        return std::max_element(bets.begin(), bets.end(),
-                                [](const Bet &a, const Bet &b) { return a.newPrice < b.newPrice; })->newPrice;
+        return (bets.size() > 0
+                ? std::max_element(bets.begin(), bets.end(),
+                                [](const Bet &a, const Bet &b) { return a.newPrice < b.newPrice; })->newPrice
+                : 0);
     }
 };
 
@@ -229,9 +231,7 @@ public:
         return LIST_LOTS_REQ;
     }
 
-
     void writeToStreamSocket(stream_socket *sk) override {}
-
 
     void readFromStreamSocket(stream_socket *sk) override {}
 

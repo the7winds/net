@@ -17,7 +17,7 @@ static const std::string HELP_MSG =
         "b <lot id> <new price> - make bet\n"
         "c <lot id> - close lot\n"
         "q - quit\n"
-        "h - show this message";
+        "h - show this message\n";
 
 int main(int argc, char **argv) {
     uint32_t lotId;

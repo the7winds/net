@@ -16,7 +16,7 @@ void TradeClient::makeBet(uint32_t lotId, uint32_t newPrice) {
     received.readFromStreamSocket(sk);
 
     if (received.getBody()->getType() == Body::BodyType::BYE)
-        throw std::exception();
+        throw std::runtime_error("server closed");
 
     Status *status = (Status *) received.getBody();
     std::cout << (status->getStatus() ? "your bet is accepted" : "try again") << '\n';
