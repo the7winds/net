@@ -25,9 +25,9 @@ public:
 
     std::list<LotShortInfo> getShortInfoList();
 
-    void makeBet(Bet bet);
+    bool makeBet(uint32_t uid, const Bet& bet);
 
-    void closeLot(int lotId);
+    bool closeLot(int uid, int lotId);
 };
 
 class TradeConnection {

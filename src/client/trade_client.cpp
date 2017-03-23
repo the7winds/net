@@ -8,7 +8,7 @@ void TradeClient::closeLot(uint32_t lotId) {
         throw std::exception();
 
     Status *status = (Status *) received.getBody();
-    std::cout << (status->getStatus() ? "closed" : "try again") << '\n';
+    std::cout << (status->getStatus() ? "closed" : "fail") << '\n';
 }
 
 void TradeClient::makeBet(uint32_t lotId, uint32_t newPrice) {
@@ -19,7 +19,7 @@ void TradeClient::makeBet(uint32_t lotId, uint32_t newPrice) {
         throw std::runtime_error("server closed");
 
     Status *status = (Status *) received.getBody();
-    std::cout << (status->getStatus() ? "your bet is accepted" : "try again") << '\n';
+    std::cout << (status->getStatus() ? "your bet is accepted" : "fail") << '\n';
 }
 
 void TradeClient::lotDetails(uint32_t lotId) {

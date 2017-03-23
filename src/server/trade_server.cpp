@@ -34,8 +34,8 @@ static void makeBetRequestHandler(stream_socket *sk, Packet *packet, TradeConnec
     std::cerr << context->getUid() << ":" << "make bet request handler\n";
 
     MakeBetRequest *request = (MakeBetRequest *) packet->getBody();
-    context->getDataStorage()->makeBet(request->getBet());
-    Packet::constructStatus(true).writeToStreamSocket(sk);
+    bool status = context->getDataStorage()->makeBet(context->getUid(), request->getBet());
+    Packet::constructStatus(status).writeToStreamSocket(sk);
 }
 
 
@@ -43,8 +43,8 @@ static void closeLotRequestHandler(stream_socket *sk, Packet *packet, TradeConne
     std::cerr << context->getUid() << ":" << "close lot request handler\n";
 
     CloseLotRequest *request = (CloseLotRequest *) packet->getBody();
-    context->getDataStorage()->closeLot(request->getLotId());
-    Packet::constructStatus(true).writeToStreamSocket(sk);
+    bool status = context->getDataStorage()->closeLot(context->getUid(), request->getLotId());
+    Packet::constructStatus(status).writeToStreamSocket(sk);
 }
 
 
@@ -148,16 +148,32 @@ std::list<LotShortInfo> DataStorage::getShortInfoList() {
 }
 
 
-void DataStorage::makeBet(Bet bet) {
+bool DataStorage::makeBet(uint32_t uid, const Bet &bet) try {
     std::unique_lock<std::mutex> lock(mtx);
     uint32_t lotId = bet.productId;
 
-    if (lotsData.at(lotId).opened)
+    if (lotsData.at(lotId).ownerId != uid
+        && lotsData.at(lotId).opened
+        && lotsData.at(lotId).startPrice <= bet.newPrice) {
         lotsData[lotId].bets.push_back(bet);
+        return true;
+    }
+
+    return false;
+} catch (...) {
+    return false;
 }
 
 
-void DataStorage::closeLot(int lotId) {
+bool DataStorage::closeLot(int uid, int lotId) try {
     std::unique_lock<std::mutex> lock(mtx);
-    lotsData.at(lotId).opened = false;
+
+    if (lotsData.at(lotId).ownerId == uid) {
+        lotsData[lotId].opened = false;
+        return true;
+    }
+
+    return false;
+} catch (...) {
+    return false;
 }
