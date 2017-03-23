@@ -1,12 +1,23 @@
 #include <iostream>
 #include "trade_client.h"
 
-static const char *NEW_LOT = "nl";
-static const char *LIST_LOTS = "ll";
-static const char *LOT_DETAILS = "ld";
-static const char *MAKE_BET = "b";
-static const char *CLOSE_LOT = "c";
-static const char *QUIT = "q";
+static const std::string NEW_LOT = "nl";
+static const std::string LIST_LOTS = "ll";
+static const std::string LOT_DETAILS = "ld";
+static const std::string MAKE_BET = "b";
+static const std::string CLOSE_LOT = "c";
+static const std::string QUIT = "q";
+static const std::string HELP = "h";
+
+static const std::string HELP_MSG =
+        "help:\n"
+        "nl <description> <price> - new lot\n"
+        "ll - list lots\n"
+        "ld <lot id> - lot details\n"
+        "b <lot id> <new price> - make bet\n"
+        "c <lot id> - close lot\n"
+        "q - quit\n"
+        "h - show this message";
 
 int main(int argc, char **argv) {
     uint32_t lotId;
@@ -36,10 +47,13 @@ int main(int argc, char **argv) {
             } else if (input == CLOSE_LOT) {
                 std::cin >> lotId;
                 tradeClient.closeLot(lotId);
+            } else if (input == HELP) {
+                std::cerr << HELP_MSG;
             } else if (input == QUIT) {
                 break;
             } else {
                 std::cerr << "unsupported operation\n";
+                std::cerr << HELP_MSG;
             }
         }
     } catch (std::exception e) {
