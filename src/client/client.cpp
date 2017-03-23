@@ -30,26 +30,26 @@ int main(int argc, char **argv) {
 
     try {
         while (true) {
-            std::string input;
-            std::getline(std::cin, input);
+            std::string cmd;
+            std::cin >> cmd;
 
-            if (input == NEW_LOT) {
+            if (cmd == NEW_LOT) {
                 std::cin >> description >> startPrice;
                 tradeClient.newLot(description, startPrice);
-            } else if (input == LIST_LOTS) {
+            } else if (cmd == LIST_LOTS) {
                 tradeClient.listLots();
-            } else if (input == LOT_DETAILS) {
+            } else if (cmd == LOT_DETAILS) {
                 std::cin >> lotId;
                 tradeClient.lotDetails(lotId);
-            } else if (input == MAKE_BET) {
+            } else if (cmd == MAKE_BET) {
                 std::cin >> lotId >> newPrice;
                 tradeClient.makeBet(lotId, newPrice);
-            } else if (input == CLOSE_LOT) {
+            } else if (cmd == CLOSE_LOT) {
                 std::cin >> lotId;
                 tradeClient.closeLot(lotId);
-            } else if (input == HELP) {
+            } else if (cmd == HELP) {
                 std::cerr << HELP_MSG;
-            } else if (input == QUIT) {
+            } else if (cmd == QUIT) {
                 break;
             } else {
                 std::cerr << "unsupported operation\n";
