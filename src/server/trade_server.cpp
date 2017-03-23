@@ -122,7 +122,7 @@ LotFullInfo DataStorage::getLotInfoById(uint32_t lotId) {
 uint32_t DataStorage::addNewLot(uint32_t startPrice, uint32_t ownerId, std::string description) {
     std::unique_lock<std::mutex> lock(mtx);
 
-    uint32_t newLotId = lotsData.rbegin()->first + 1;
+    uint32_t newLotId = lotsData.size() + 1;
     lotsData[newLotId] = LotFullInfo(newLotId, ownerId, true, description, startPrice, std::list<Bet>());
 
     return newLotId;
