@@ -26,7 +26,12 @@ int main(int argc, char **argv) {
     std::string description;
     TradeClient tradeClient(argv[1]);
 
-    tradeClient.start();
+    if (argc == 2) {
+        tradeClient.start();
+    } else {
+        std::cerr << "usage: ./server <ip>\n";
+        return 0;
+    }
 
     try {
         while (true) {
