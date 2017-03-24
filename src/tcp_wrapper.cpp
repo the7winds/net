@@ -20,7 +20,7 @@ void tcp_connection_socket::send(const void *buf, size_t size) {
     if (size != ::send(sk, buf, size, 0)) {
         err_msg = "can't send all data";
         perror(err_msg);
-        throw std::exception();
+        throw std::runtime_error(err_msg);
     }
 }
 
@@ -31,12 +31,13 @@ void tcp_connection_socket::recv(void *buf, size_t size) {
     if (size != ::recv(sk, buf, size, 0)) {
         err_msg = "can't receive all data";
         perror(err_msg);
-        throw std::exception();
+        throw std::runtime_error(err_msg);
     }
 }
 
 
 void tcp_connection_socket::close() {
+    ::shutdown(sk, SHUT_RDWR);
     ::close(sk);
     closed = true;
 }
@@ -61,9 +62,8 @@ tcp_client_socket::tcp_client_socket(const char *addr, tcp_port port) {
 void tcp_client_socket::connect() {
     std::unique_lock<std::mutex> lock(mtx);
 
-    if (err_msg) {
-        throw std::exception();
-    }
+    if (err_msg)
+        throw std::runtime_error(err_msg);
 
     if (sk < 0) {
         err_msg = "invalid socket descriptor";
@@ -160,13 +160,13 @@ stream_socket *tcp_server_socket::accept_one_client() {
 }
 
 void tcp_server_socket::close() {
-    for (auto i = acceptedSockets.begin(); i != acceptedSockets.end(); ++i)
-        (*i)->close();
-
     if (sk >= 0) {
         ::shutdown(sk, SHUT_RDWR);
         ::close(sk);
     }
+
+    for (auto i = acceptedSockets.begin(); i != acceptedSockets.end(); ++i)
+        (*i)->close();
 
     std::cerr << "server socket is closed\n";
 }

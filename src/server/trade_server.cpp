@@ -68,7 +68,7 @@ void TradeConnection::handle() {
                 break;
             messagesHandlers[packet.getBody()->getType()](sk, &packet, context);
         }
-    } catch (std::exception e) {
+    } catch (std::exception &e) {
         std::cerr << e.what() << '\n';
     }
 }
