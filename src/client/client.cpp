@@ -24,33 +24,40 @@ int main(int argc, char **argv) {
     uint32_t startPrice;
     uint32_t newPrice;
     std::string description;
-    TradeClient tradeClient(argv[1]);
 
-    if (argc == 2) {
-        tradeClient.start();
-    } else {
+    if (argc != 2) {
         std::cerr << "usage: ./server <ip>\n";
         return 0;
     }
 
+    TradeClient tradeClient(argv[1]);
+    tradeClient.start();
+
     try {
         while (true) {
             std::string cmd;
+            std::string w1, w2;
             std::cin >> cmd;
 
             if (cmd == NEW_LOT) {
-                std::cin >> description >> startPrice;
+                std::cin >> w1 >> w2;
+                description = w1;
+                startPrice = atoi(w2.c_str());
                 tradeClient.newLot(description, startPrice);
             } else if (cmd == LIST_LOTS) {
                 tradeClient.listLots();
             } else if (cmd == LOT_DETAILS) {
-                std::cin >> lotId;
+                std::cin >> w1;
+                lotId = atoi(w1.c_str());
                 tradeClient.lotDetails(lotId);
             } else if (cmd == MAKE_BET) {
-                std::cin >> lotId >> newPrice;
+                std::cin >> w1 >> w2;
+                lotId = atoi(w1.c_str());
+                newPrice = atoi(w2.c_str());
                 tradeClient.makeBet(lotId, newPrice);
             } else if (cmd == CLOSE_LOT) {
-                std::cin >> lotId;
+                std::cin >> w1;
+                lotId = atoi(w1.c_str());
                 tradeClient.closeLot(lotId);
             } else if (cmd == HELP) {
                 std::cerr << HELP_MSG;
