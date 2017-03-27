@@ -24,16 +24,19 @@ int main(int argc, char **argv) {
     uint32_t startPrice;
     uint32_t newPrice;
     std::string description;
+    const char* ip = DEFAULT_ADDR;
+    tcp_port port = DEFAULT_PORT;
 
-    if (argc != 2) {
-        std::cerr << "usage: ./server <ip>\n";
-        return 0;
-    }
+    if (argc > 2)
+        port = atoi(argv[2]);
+    if (argc > 1)
+        ip = argv[1];
 
-    TradeClient tradeClient(argv[1]);
-    tradeClient.start();
+    TradeClient tradeClient(ip, port);
 
     try {
+        tradeClient.start();
+
         while (true) {
             std::string cmd;
             std::string w1, w2;

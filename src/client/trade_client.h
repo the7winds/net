@@ -9,8 +9,8 @@ class TradeClient {
     tcp_client_socket *sk = nullptr;
 
 public:
-    TradeClient(const char *serverAddr) {
-        sk = new tcp_client_socket(serverAddr, HOST_PORT);
+    TradeClient(const char *serverAddr, tcp_port port = DEFAULT_PORT) {
+        sk = new tcp_client_socket(serverAddr, port);
     }
 
     void start();

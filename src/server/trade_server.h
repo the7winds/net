@@ -6,8 +6,8 @@
 #include "../tcp_wrapper.h"
 #include <iostream>
 
-static const hostname HOST_ADDR = "127.0.0.1";
-static const tcp_port HOST_PORT = 8000;
+#define DEFAULT_ADDR "127.0.0.1"
+#define DEFAULT_PORT 40001
 
 
 class DataStorage {
@@ -86,8 +86,8 @@ class TradeServer {
     }
 
 public:
-    TradeServer() {
-        serverSocket = new tcp_server_socket(HOST_ADDR, HOST_PORT);
+    TradeServer(const char* ip, tcp_port port) {
+        serverSocket = new tcp_server_socket(ip, port);
     }
 
     void start();
