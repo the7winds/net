@@ -147,7 +147,7 @@ public:
 
     static Packet constructLotDetailsRequest(uint32_t lotId);
 
-    static Packet constructMakeBetRequest(uint32_t lotId, uint32_t newPrice);
+    static Packet constructMakeBetRequest(uint32_t uid, uint32_t lotId, uint32_t newPrice);
 
     static Packet constructCloseLotRequest(uint32_t lotId);
 
@@ -279,7 +279,8 @@ class MakeBetRequest : public Body {
 public:
     MakeBetRequest() {}
 
-    MakeBetRequest(uint32_t lotId, uint32_t newPrice) {
+    MakeBetRequest(uint32_t uid, uint32_t lotId, uint32_t newPrice) {
+        bet.customerId = uid;
         bet.productId = lotId;
         bet.newPrice = newPrice;
     }

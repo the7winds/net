@@ -83,8 +83,8 @@ Packet Packet::constructLotDetailsRequest(uint32_t lotId) {
     return Packet((Body *) new LotDetailsRequest(lotId));
 }
 
-Packet Packet::constructMakeBetRequest(uint32_t lotId, uint32_t newPrice) {
-    return Packet(new MakeBetRequest(lotId, newPrice));
+Packet Packet::constructMakeBetRequest(uint32_t uid, uint32_t lotId, uint32_t newPrice) {
+    return Packet(new MakeBetRequest(uid, lotId, newPrice));
 }
 
 

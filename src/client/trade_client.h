@@ -4,6 +4,7 @@
 #include "../server/trade_server.h"
 
 class TradeClient {
+    uint32_t uid;
     Packet received;
     tcp_client_socket *sk = nullptr;
 
@@ -25,4 +26,6 @@ public:
     void closeLot(uint32_t lotId);
 
     ~TradeClient();
+
+    void bye();
 };

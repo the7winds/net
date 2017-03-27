@@ -71,6 +71,7 @@ void TradeConnection::handle() {
     } catch (std::exception &e) {
         std::cerr << e.what() << '\n';
     }
+    std::cerr << "connection closed\n";
 }
 
 

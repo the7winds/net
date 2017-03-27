@@ -62,6 +62,7 @@ int main(int argc, char **argv) {
             } else if (cmd == HELP) {
                 std::cerr << HELP_MSG;
             } else if (cmd == QUIT) {
+                tradeClient.bye();
                 break;
             } else {
                 std::cerr << "unsupported operation\n";

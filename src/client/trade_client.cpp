@@ -12,7 +12,7 @@ void TradeClient::closeLot(uint32_t lotId) {
 }
 
 void TradeClient::makeBet(uint32_t lotId, uint32_t newPrice) {
-    Packet::constructMakeBetRequest(lotId, newPrice).writeToStreamSocket(sk);
+    Packet::constructMakeBetRequest(uid, lotId, newPrice).writeToStreamSocket(sk);
     received.readFromStreamSocket(sk);
 
     if (received.getBody()->getType() == Body::BodyType::BYE)
@@ -75,8 +75,12 @@ void TradeClient::start() {
     if (received.getBody()->getType() == Body::BodyType::BYE)
         throw std::exception();
     AuthorisationResponse* authorisationResponse = (AuthorisationResponse *) received.getBody();
+    uid = authorisationResponse->getId();
+    std::cout << "Connection success! Your id: " << uid << '\n';
+}
 
-    std::cout << "Connection success! Your id: " << authorisationResponse->getId() << '\n';
+void TradeClient::bye() {
+    Packet::constructBye().writeToStreamSocket(sk);
 }
 
 TradeClient::~TradeClient() {
