@@ -1,6 +1,8 @@
 #include <netinet/in.h>
 #include <memory>
 #include <arpa/inet.h>
+#include <netdb.h>
+#include <cstring>
 #include "stream_socket.h"
 #include "util.h"
 
@@ -8,9 +10,12 @@
 void init_ipv4addr(const char *addr, tcp_port port, sockaddr_in &ipv4addr) {
     ipv4addr.sin_family = AF_INET;
     ipv4addr.sin_port = htons(port);
-    if (!inet_pton(AF_INET, addr, &ipv4addr.sin_addr)) {
+    addrinfo *info;
+    if (getaddrinfo(addr, NULL, NULL, &info))
         throw std::runtime_error("can't create ipv4addr");
-    }
+
+    ipv4addr.sin_addr = ((sockaddr_in*) info->ai_addr)->sin_addr;
+    freeaddrinfo(info);
 }
 
 

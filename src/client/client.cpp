@@ -32,9 +32,8 @@ int main(int argc, char **argv) {
     if (argc > 1)
         ip = argv[1];
 
-    TradeClient tradeClient(ip, port);
-
     try {
+        TradeClient tradeClient(ip, port);
         tradeClient.start();
 
         while (true) {
