@@ -69,9 +69,9 @@ void TradeConnection::handle() {
             messagesHandlers[packet.getBody()->getType()](sk, &packet, context);
         }
     } catch (std::exception &e) {
-        std::cerr << e.what() << '\n';
+        std::cerr << context->getUid() << ":" << e.what() << '\n';
     }
-    std::cerr << "connection closed\n";
+    std::cerr << context->getUid() << ":" << "connection closed\n";
 }
 
 
