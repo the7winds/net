@@ -5,7 +5,7 @@ void TradeClient::closeLot(uint32_t lotId) {
     received.readFromStreamSocket(sk);
 
     if (received.getBody()->getType() == Body::BodyType::BYE)
-        throw std::exception();
+        throw std::runtime_error("server closed");
 
     Status *status = (Status *) received.getBody();
     std::cout << (status->getStatus() ? "closed" : "fail") << '\n';
@@ -26,7 +26,7 @@ void TradeClient::lotDetails(uint32_t lotId) {
     Packet::constructLotDetailsRequest(lotId).writeToStreamSocket(sk);
     received.readFromStreamSocket(sk);
     if (received.getBody()->getType() == Body::BodyType::BYE)
-        throw std::exception();
+        throw std::runtime_error("server closed");
 
     LotDetailsResponse *lotDetailsResponse = (LotDetailsResponse *) received.getBody();
     const LotFullInfo &lotFullInfo = lotDetailsResponse->getLotDetails();
@@ -48,7 +48,7 @@ void TradeClient::listLots() {
     Packet::constructListLotsRequest().writeToStreamSocket(sk);
     received.readFromStreamSocket(sk);
     if (received.getBody()->getType() == Body::BodyType::BYE)
-        throw std::exception();
+        throw std::runtime_error("server closed");
 
     ListLotsResponse *listLotsResponse = (ListLotsResponse *) received.getBody();
 
@@ -73,7 +73,7 @@ void TradeClient::start() {
 
     received.readFromStreamSocket(sk);
     if (received.getBody()->getType() == Body::BodyType::BYE)
-        throw std::exception();
+        throw std::runtime_error("server closed");
     AuthorisationResponse* authorisationResponse = (AuthorisationResponse *) received.getBody();
     uid = authorisationResponse->getId();
     std::cout << "Connection success! Your id: " << uid << '\n';

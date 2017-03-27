@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
                 std::cerr << HELP_MSG;
             }
         }
-    } catch (std::exception e) {
+    } catch (std::exception &e) {
         std::cerr << e.what() << '\n';
     }
 
