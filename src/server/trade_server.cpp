@@ -69,6 +69,11 @@ void TradeConnection::handle() {
             messagesHandlers[packet.getBody()->getType()](sk, &packet, context);
         }
     } catch (std::exception &e) {
+        /*
+         * здесь мы окажемся, только если что-то пойдёт не так во время чтения,
+         * например клиент отвалился и не смог нас оповестить
+         * так, мы просто закончим соединение
+         */
         std::cerr << context->getUid() << ":" << e.what() << '\n';
     }
     std::cerr << context->getUid() << ":" << "connection closed\n";
@@ -88,6 +93,10 @@ void TradeServer::listenConnection() {
             connections.push_back(new TradeConnection(streamSocket, &dataStorage));
         }
     } catch (std::exception &e) {
+        /*
+         * здесь мы окажемся, если не можем принять новое соединение
+         * или когда сервер будет завершатся, мы закроем сокет и тоже окажемся здесь
+         */
         std::cerr << e.what() << '\n';
     }
 }
@@ -162,6 +171,10 @@ bool DataStorage::makeBet(uint32_t uid, const Bet &bet) try {
 
     return false;
 } catch (...) {
+    /*
+     * здесь окажемся если id был некорректным,
+     * тогда мы не можем сделать ставку
+     */
     return false;
 }
 
@@ -176,5 +189,9 @@ bool DataStorage::closeLot(int uid, int lotId) try {
 
     return false;
 } catch (...) {
+    /*
+     * здесь окажемся если id был некорректным,
+     * тогда мы не можем закрыть лот
+     */
     return false;
 }
