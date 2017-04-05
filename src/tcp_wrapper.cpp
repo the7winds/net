@@ -62,6 +62,8 @@ tcp_client_socket::tcp_client_socket(const char *addr, tcp_port port) {
 void tcp_client_socket::connect() {
     std::unique_lock<std::mutex> lock(mtx);
 
+    if (connected) return;
+
     if (err_msg)
         throw std::runtime_error(err_msg);
 
@@ -76,6 +78,8 @@ void tcp_client_socket::connect() {
         perror(err_msg);
         throw std::runtime_error(err_msg);
     }
+
+    connected = true;
 }
 
 

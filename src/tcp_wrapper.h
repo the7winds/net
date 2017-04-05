@@ -57,6 +57,7 @@ class tcp_client_socket : public stream_client_socket {
     const char *err_msg = nullptr;
     std::mutex mtx;
     sockaddr_in ipv4addr;
+    bool connected = false;
 
 public:
     tcp_client_socket(const char *addr, uint16_t port);
