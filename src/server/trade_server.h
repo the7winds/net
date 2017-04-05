@@ -3,7 +3,7 @@
 #include <thread>
 #include <set>
 #include "../protocol.h"
-#include "../tcp_wrapper.h"
+#include "../tcp_socket.h"
 #include <iostream>
 
 #define DEFAULT_ADDR "127.0.0.1"

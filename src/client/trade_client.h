@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../tcp_wrapper.h"
+#include "../tcp_socket.h"
 #include "../server/trade_server.h"
 
 class TradeClient {
