@@ -15,23 +15,36 @@ tcp_connection_socket::tcp_connection_socket(int sk) {
 
 
 void tcp_connection_socket::send(const void *buf, size_t size) {
+    size_t sended;
     std::unique_lock<std::mutex> lock(mtx);
 
-    if (size != ::send(sk, buf, size, 0)) {
-        err_msg = "can't send all data";
-        perror(err_msg);
-        throw std::runtime_error(err_msg);
+
+    while (size) {
+        sended = ::send(sk, buf, size, 0)) {
+        if (sended < 0) {
+            err_msg = "can't send all data";
+            perror(err_msg);
+            throw std::runtime_error(err_msg);
+	}
+        size -= sended;
+	buf += sended;
     }
 }
 
 
 void tcp_connection_socket::recv(void *buf, size_t size) {
+    size_t recved;
     std::unique_lock<std::mutex> lock(mtx);
 
-    if (size != ::recv(sk, buf, size, 0)) {
-        err_msg = "can't receive all data";
-        perror(err_msg);
-        throw std::runtime_error(err_msg);
+    while (size) {
+        recved = ::recv(sk, buf, size, 0);
+        if (recved < 0) {
+            err_msg = "can't receive all data";
+            perror(err_msg);
+            throw std::runtime_error(err_msg);
+        }
+	size -= recved;
+        buf += recved;
     }
 }
 
