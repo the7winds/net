@@ -8,12 +8,6 @@
  * tcp_socket implementation
  */
 
-tcp_connection_socket::tcp_connection_socket(int sk) {
-    this->sk = sk;
-    err_msg = nullptr;
-}
-
-
 void tcp_connection_socket::send(const void *buf, size_t size) {
     size_t sended;
     std::unique_lock<std::mutex> lock(mtx);
@@ -67,7 +61,7 @@ tcp_connection_socket::~tcp_connection_socket() {
  */
 
 tcp_client_socket::tcp_client_socket(const char *addr, tcp_port port) {
-    sk = socket(AF_INET, SOCK_STREAM, 0);
+    sk.sk = socket(AF_INET, SOCK_STREAM, 0);
     init_ipv4addr(addr, port, ipv4addr);
 }
 
@@ -80,13 +74,13 @@ void tcp_client_socket::connect() {
     if (err_msg)
         throw std::runtime_error(err_msg);
 
-    if (sk < 0) {
+    if (sk.sk < 0) {
         err_msg = "invalid socket descriptor";
         perror(err_msg);
         throw std::runtime_error(err_msg);
     }
 
-    if (::connect(sk, (sockaddr *) &ipv4addr, sizeof(ipv4addr)) < 0) {
+    if (::connect(sk.sk, (sockaddr *) &ipv4addr, sizeof(ipv4addr)) < 0) {
         err_msg = "can't connect";
         perror(err_msg);
         throw std::runtime_error(err_msg);
@@ -98,23 +92,13 @@ void tcp_client_socket::connect() {
 
 void tcp_client_socket::send(const void *buf, size_t size) {
     std::unique_lock<std::mutex> lock(mtx);
-
-    if (size != ::send(sk, buf, size, 0)) {
-        err_msg = "can't send all data";
-        perror(err_msg);
-        throw std::runtime_error(err_msg);
-    }
+    sk.send(buf, size);
 }
 
 
 void tcp_client_socket::recv(void *buf, size_t size) {
     std::unique_lock<std::mutex> lock(mtx);
-
-    if (size != ::recv(sk, buf, size, 0)) {
-        err_msg = "can't receive all data";
-        perror(err_msg);
-        throw std::runtime_error(err_msg);
-    }
+    sk.recv(buf, size);
 }
 
 
