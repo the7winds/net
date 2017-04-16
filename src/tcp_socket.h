@@ -6,7 +6,6 @@
 #include <sys/types.h>
 
 #include <exception>
-#include <mutex>
 #include <netinet/in.h>
 #include <list>
 
@@ -16,7 +15,6 @@ class tcp_server_socket : public stream_server_socket {
     const static int BACKLOG = 5;
     int sk = -1;
     const char *err_msg = nullptr;
-    std::mutex mtx;
     sockaddr_in ipv4addr;
     std::list<tcp_connection_socket *> acceptedSockets;
 
@@ -34,7 +32,6 @@ public:
 class tcp_connection_socket : public stream_socket {
     int sk;
     const char *err_msg = nullptr;
-    std::mutex mtx;
     bool closed = false;
 
     tcp_connection_socket() {}

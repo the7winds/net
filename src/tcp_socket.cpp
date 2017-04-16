@@ -10,8 +10,6 @@
 
 void tcp_connection_socket::send(const void *buf, size_t size) {
     size_t sended;
-    std::unique_lock<std::mutex> lock(mtx);
-
 
     while (size) {
         sended = ::send(sk, buf, size, 0)) {
@@ -28,7 +26,6 @@ void tcp_connection_socket::send(const void *buf, size_t size) {
 
 void tcp_connection_socket::recv(void *buf, size_t size) {
     size_t recved;
-    std::unique_lock<std::mutex> lock(mtx);
 
     while (size) {
         recved = ::recv(sk, buf, size, 0);
@@ -67,8 +64,6 @@ tcp_client_socket::tcp_client_socket(const char *addr, tcp_port port) {
 
 
 void tcp_client_socket::connect() {
-    std::unique_lock<std::mutex> lock(mtx);
-
     if (connected) return;
 
     if (err_msg)
@@ -91,13 +86,11 @@ void tcp_client_socket::connect() {
 
 
 void tcp_client_socket::send(const void *buf, size_t size) {
-    std::unique_lock<std::mutex> lock(mtx);
     sk.send(buf, size);
 }
 
 
 void tcp_client_socket::recv(void *buf, size_t size) {
-    std::unique_lock<std::mutex> lock(mtx);
     sk.recv(buf, size);
 }
 
@@ -138,8 +131,6 @@ tcp_server_socket::tcp_server_socket(const char *addr, tcp_port port) {
 
 
 stream_socket *tcp_server_socket::accept_one_client() {
-    std::unique_lock<std::mutex> lock(mtx);
-
     if (err_msg) {
         perror(err_msg);
         throw std::runtime_error(err_msg);
