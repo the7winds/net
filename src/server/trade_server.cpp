@@ -25,8 +25,12 @@ static void lotDetailsRequestHandler(stream_socket *sk, Packet *packet, TradeCon
 
     LotDetailsRequest *request = (LotDetailsRequest *) packet->getBody();
     uint32_t lotId = request->getLotId();
-    LotFullInfo lotFullInfo = context->getDataStorage()->getLotInfoById(lotId);
-    Packet::constructLotDetailsResponse(lotFullInfo).writeToStreamSocket(sk);
+    try {
+        LotFullInfo lotFullInfo = context->getDataStorage()->getLotInfoById(lotId);
+        Packet::constructLotDetailsResponse(lotFullInfo).writeToStreamSocket(sk);
+    } catch (...) {
+        Packet::constructStatus(false).writeToStreamSocket(sk);
+    }
 }
 
 
@@ -130,7 +134,7 @@ uint32_t DataStorage::addNewUser() {
 
 LotFullInfo DataStorage::getLotInfoById(uint32_t lotId) {
     std::unique_lock<std::mutex> lock(mtx);
-    return lotsData[lotId];
+    return lotsData.at(lotId);
 }
 
 
