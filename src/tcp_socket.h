@@ -14,9 +14,7 @@ class tcp_connection_socket;
 class tcp_server_socket : public stream_server_socket {
     const static int BACKLOG = 5;
     int sk = -1;
-    const char *err_msg = nullptr;
     sockaddr_in ipv4addr;
-    std::list<tcp_connection_socket *> acceptedSockets;
 
 public:
     tcp_server_socket(const char *addr, uint16_t port);
@@ -31,7 +29,6 @@ public:
 
 class tcp_connection_socket : public stream_socket {
     int sk;
-    const char *err_msg = nullptr;
     bool closed = false;
 
     tcp_connection_socket() {}
@@ -55,7 +52,6 @@ class tcp_client_socket : public stream_client_socket {
     tcp_connection_socket sk;
     sockaddr_in ipv4addr;
     bool connected = false;
-    const char *err_msg = nullptr;
 
 public:
     tcp_client_socket(const char *addr, uint16_t port);
