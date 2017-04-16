@@ -1,6 +1,7 @@
 #pragma once
 
 #include <thread>
+#include <mutex>
 #include <set>
 #include "../protocol.h"
 #include "../tcp_socket.h"

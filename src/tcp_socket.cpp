@@ -12,14 +12,14 @@ void tcp_connection_socket::send(const void *buf, size_t size) {
     size_t sended;
 
     while (size) {
-        sended = ::send(sk, buf, size, 0)) {
+        sended = ::send(sk, buf, size, 0);
         if (sended < 0) {
             err_msg = "can't send all data";
             perror(err_msg);
             throw std::runtime_error(err_msg);
 	}
         size -= sended;
-	buf += sended;
+	buf = (char*) buf + sended;
     }
 }
 
@@ -35,7 +35,7 @@ void tcp_connection_socket::recv(void *buf, size_t size) {
             throw std::runtime_error(err_msg);
         }
 	size -= recved;
-        buf += recved;
+        buf = (char*) buf + recved;
     }
 }
 
@@ -96,7 +96,7 @@ void tcp_client_socket::recv(void *buf, size_t size) {
 
 
 tcp_client_socket::~tcp_client_socket() {
-    close(sk);
+    close(sk.sk);
 }
 
 

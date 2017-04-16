@@ -55,6 +55,7 @@ class tcp_client_socket : public stream_client_socket {
     tcp_connection_socket sk;
     sockaddr_in ipv4addr;
     bool connected = false;
+    const char *err_msg = nullptr;
 
 public:
     tcp_client_socket(const char *addr, uint16_t port);
