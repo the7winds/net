@@ -1,15 +1,14 @@
 #pragma once
 
-#include <stdint.h>
 #include "stream_socket.h"
+#include <stdint.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-#include <sys/timerfd.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <array>
 #include <tuple>
-#include <cstring>
 #include <atomic>
 #include <mutex>
 #include <iostream>
