@@ -26,8 +26,6 @@
  */
 
 constexpr int IPPROTO_AU_TCP = 42;
-constexpr int GLOBAL_IO_TO = 60000000; // 1 min
-constexpr int RECV_TO = 1; // 1 sec
 
 typedef uint16_t au_port;
 typedef const char *hostname;
@@ -118,7 +116,6 @@ public:
 
 template <uint16_t buf_size>
 class send_buffer {
-    // yeah it's global for the hole object
     std::mutex mutex;
 
     std::array<char, buf_size> buf;
@@ -126,8 +123,18 @@ class send_buffer {
     uint16_t len_sent = 0;
     uint16_t len_total = 0;
     bool retransmit = false;
+    std::atomic_bool frozen;
 
 public:
+    send_buffer() {
+        frozen.store(false);
+    }
+
+    void froze() {
+        std::lock_guard<std::mutex> lock(mutex);
+        frozen.store(true);
+    }
+
     void init(uint32_t ack_seq) {
         begin = ack_seq;
     }
@@ -173,6 +180,10 @@ public:
 
     void set_retransmit(bool need) {
         std::lock_guard<std::mutex> lock(mutex);
+        if (frozen.load()) {
+            return;
+        }
+
         retransmit = need;
     }
 };
@@ -180,16 +191,25 @@ public:
 
 template <uint16_t buf_size>
 struct recv_buffer {
-    // yeah it's global for the hole object
     std::mutex mutex;
 
     std::array<char, buf_size> buf;
     uint32_t begin = 0;
     uint16_t len = 0;
+    std::atomic_bool frozen;
 
 public:
+    recv_buffer() {
+        frozen.store(false);
+    }
+
     void init(uint32_t wait_seq) {
         begin = wait_seq;
+    }
+
+    void froze() {
+        std::lock_guard<std::mutex> lock(mutex);
+        frozen.store(true);
     }
 
     uint16_t write(const void* data, uint16_t len);
@@ -260,6 +280,9 @@ class au_stream_socket : public stream_socket {
         listen_thread = std::thread(listen, this);
         while (state.load() != TCP_ESTABLISHED);
     }
+
+    void fin();
+
 public:
     au_stream_socket() {
         state.store(TCP_CLOSE);
@@ -269,8 +292,9 @@ public:
     void send(const void *buf, size_t size) override;
     void recv(void *buf, size_t size) override;
     ~au_stream_socket() {
-        logger.info("%d: closed", connection.my_port);
-        state.store(TCP_CLOSE);
+        if (state.load() == TCP_ESTABLISHED) {
+            fin();
+        }
 
         if (listen_thread.joinable()) {
             listen_thread.join();

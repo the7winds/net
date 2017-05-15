@@ -10,12 +10,16 @@
 #include <condition_variable>
 
 /* zero filled packets */
-static ip_packet z_ip;
-static tcp_packet z_tcp;
+const static ip_packet z_ip = {0};
+const static tcp_packet z_tcp = {0};
 
 template <uint16_t buf_size>
 uint16_t send_buffer<buf_size>::write(const void* data, uint16_t l) {
     std::lock_guard<std::mutex> lock(mutex);
+    if (frozen.load()) {
+        return 0;
+    }
+
     const char* cdata = (const char*) data;
 
     uint16_t copy = std::min(l, (uint16_t) (buf_size - len_total));
@@ -31,6 +35,10 @@ uint16_t send_buffer<buf_size>::write(const void* data, uint16_t l) {
 template <uint16_t buf_size>
 uint16_t send_buffer<buf_size>::copy_for_transmit(char *data, uint16_t size) {
     std::lock_guard<std::mutex> lock(mutex);
+    if (frozen.load()) {
+        return 0;
+    }
+
     uint16_t copy = std::min(size, (uint16_t) (len_total - len_sent));
 
     for (uint16_t i = 0; i < copy; ++i) {
@@ -60,6 +68,10 @@ uint16_t send_buffer<buf_size>::copy_for_retransmit(char *data, uint16_t size) {
 template <uint16_t buf_size>
 void send_buffer<buf_size>::free_to_pos(uint32_t pos) {
     std::lock_guard<std::mutex> lock(mutex);
+    if (frozen.load()) {
+        return;
+    }
+
     if (pos < begin) {
         return;
     }
@@ -84,6 +96,10 @@ uint16_t recv_buffer<buf_size>::write(const void* data, uint16_t l) {
     std::lock_guard<std::mutex> lock(mutex);
     const char* cdata = (const char*) data;
 
+    if (frozen.load()) {
+        return 0;
+    }
+
     uint16_t copy = std::min(l, (uint16_t) (buf_size - len));
     for (uint16_t i = 0; i < copy; ++i) {
         buf[(begin + len) % buf_size] = cdata[i];
@@ -98,6 +114,10 @@ template <uint16_t buf_size>
 uint16_t recv_buffer<buf_size>::read(void* data, uint16_t l) {
     std::lock_guard<std::mutex> lock(mutex);
     char* cdata = (char*) data;
+
+    if (frozen.load()) {
+        return 0;
+    }
 
     uint16_t copy = std::min(l, len);
     for (uint16_t i = 0; i < copy; ++i) {
@@ -154,6 +174,8 @@ void au_stream_socket::send(const void *data, size_t size) {
     }
 
     while (!send_buf.is_empty()) {
+        if (state.load() != TCP_ESTABLISHED)
+            throw std::runtime_error("invalid state");
         flush();
     }
 }
@@ -196,7 +218,9 @@ void au_stream_socket::transmit() {
             try_send(sk_send, send_packet, sizeof(tcphdr) + copied);
             logger.debug("%d:%d: transmit seq %d size %d window %d",
                          connection.my_port, connection.other_port, send_packet.header.seq, copied, window.load());
-        } else {
+        }
+
+        if (copied < 2) {
             return;
         }
     }
@@ -283,8 +307,121 @@ void au_stream_socket::handle_data(tcp_packet& packet, size_t data_size) {
 }
 
 void au_stream_socket::handle_fin(tcp_packet& packet) {
-    // TODO
+    tcp_packet resp = z_tcp;
+
     logger.debug("handle fin");
+    resp.header.ack = 1;
+    resp.header.ack_seq = packet.header.seq + 1;
+    try_send(sk_recv, resp, sizeof(tcphdr));
+    state.store(TCP_CLOSE_WAIT);
+
+    recv_buf.froze();
+    send_buf.froze();
+
+    resp = z_tcp;
+    resp.header.fin = 1;
+    resp.header.seq = send_buf.get_seq();
+    try_send(sk_recv, resp, sizeof(tcphdr));
+    state.store(TCP_LAST_ACK);
+
+    ip_packet last;
+
+    while (true) {
+        ssize_t sz = recvfrom(sk_recv, &last, sizeof(last), MSG_DONTWAIT, NULL, 0);
+
+        if (sz < 0) {
+            if (errno == 0 || errno == EAGAIN || errno == EWOULDBLOCK || errno == EINPROGRESS || errno == EINTR) {
+                continue;
+            } else {
+                state.store(TCP_CLOSE);
+                logger.debug("errno %d", errno);
+                throw std::runtime_error("fail");
+            }
+        }
+
+        if (tcp_packet::has_errors(last.tcp, sz - sizeof(iphdr)))
+            continue;
+
+        if (!connection.check_income_packet(last))
+            continue;
+
+        if (last.tcp.header.ack && last.tcp.header.ack_seq == resp.header.seq + 1) {
+            state.store(TCP_CLOSE);
+            return;
+        }
+    }
+}
+
+
+void au_stream_socket::fin() {
+    tcp_packet send_packet = z_tcp;
+
+    recv_buf.froze();
+    send_buf.froze();
+
+    logger.debug("send fin");
+    send_packet.header.fin = 1;
+    send_packet.header.seq = send_buf.get_seq();
+    try_send(sk_recv, send_packet, sizeof(tcphdr));
+    state.store(TCP_FIN_WAIT1);
+
+    ip_packet recv_packet;
+
+    while (true) {
+        ssize_t sz = recvfrom(sk_recv, &recv_packet, sizeof(recv_packet), MSG_DONTWAIT, NULL, 0);
+
+        if (sz < 0) {
+            if (errno == 0 || errno == EAGAIN || errno == EWOULDBLOCK || errno == EINPROGRESS || errno == EINTR) {
+                continue;
+            } else {
+                state.store(TCP_CLOSE);
+                logger.debug("errno %d", errno);
+                throw std::runtime_error("fail");
+            }
+        }
+
+        if (tcp_packet::has_errors(recv_packet.tcp, sz - sizeof(iphdr)))
+            continue;
+
+        if (!connection.check_income_packet(recv_packet))
+            continue;
+
+        if (recv_packet.tcp.header.ack && recv_packet.tcp.header.ack_seq == send_packet.header.seq + 1) {
+            state.store(TCP_FIN_WAIT2);
+            break;
+        }
+    }
+
+    while (true) {
+        ssize_t sz = recvfrom(sk_recv, &recv_packet, sizeof(recv_packet), MSG_DONTWAIT, NULL, 0);
+
+        if (sz < 0) {
+            if (errno == 0 || errno == EAGAIN || errno == EWOULDBLOCK || errno == EINPROGRESS || errno == EINTR) {
+                continue;
+            } else {
+                state.store(TCP_CLOSE);
+                logger.debug("errno %d", errno);
+                throw std::runtime_error("fail");
+            }
+        }
+
+        if (tcp_packet::has_errors(recv_packet.tcp, sz - sizeof(iphdr)))
+            continue;
+
+        if (!connection.check_income_packet(recv_packet))
+            continue;
+
+        if (recv_packet.tcp.header.fin) {
+            break;
+        }
+    }
+
+    send_packet = z_tcp;
+    send_packet.header.ack = 1;
+    send_packet.header.ack_seq = recv_packet.tcp.header.seq + 1;
+
+    try_send(sk_recv, send_packet, sizeof(tcphdr));
+
     state.store(TCP_CLOSE);
 }
 
