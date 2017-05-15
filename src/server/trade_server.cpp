@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <signal.h>
 #include "trade_server.h"
 
 
@@ -92,7 +93,7 @@ void TradeServer::listenConnection() {
     try {
         std::cerr << "start listen connections\n";
 
-        while (true) {
+        while (!closed.load()) {
             stream_socket *streamSocket = serverSocket->accept_one_client();
             connections.push_back(new TradeConnection(streamSocket, &dataStorage));
         }
@@ -114,7 +115,8 @@ void TradeServer::start() {
 
 TradeServer::~TradeServer() {
     std::cerr << "server closes\n";
-    serverSocket->close();
+    closed.store(true);
+    kill(0, SIGUSR1);
     listenerThread.join();
     for (auto i = connections.begin(); i != connections.end(); ++i) {
         delete *i;

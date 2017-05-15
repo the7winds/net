@@ -6,6 +6,7 @@
 #include "../protocol.h"
 #include "../tcp_socket.h"
 #include <iostream>
+#include "../au_stream_socket.h"
 
 #define DEFAULT_ADDR "127.0.0.1"
 #define DEFAULT_PORT 40001
@@ -75,10 +76,11 @@ private:
 
 
 class TradeServer {
-    tcp_server_socket *serverSocket = nullptr;
+    stream_server_socket *serverSocket = nullptr;
     std::thread listenerThread;
     std::list<TradeConnection*> connections;
     DataStorage dataStorage;
+    std::atomic_bool closed;
 
     void listenConnection();
 
@@ -88,7 +90,13 @@ class TradeServer {
 
 public:
     TradeServer(const char* ip, tcp_port port) {
-        serverSocket = new tcp_server_socket(ip, port);
+        char *socket_type = getenv("STREAM_SOCK_TYPE");
+        if (socket_type == NULL || std::string(socket_type) == "AU") {
+            serverSocket = new au_stream_server_socket(ip, port);
+        } else {
+            serverSocket = new tcp_server_socket(ip, port);
+        }
+        closed.store(false);
     }
 
     void start();
