@@ -123,16 +123,16 @@ class send_buffer {
     uint16_t len_sent = 0;
     uint16_t len_total = 0;
     bool retransmit = false;
-    std::atomic_bool frozen;
+    bool frozen;
 
 public:
     send_buffer() {
-        frozen.store(false);
+        frozen = false;
     }
 
     void froze() {
         std::lock_guard<std::mutex> lock(mutex);
-        frozen.store(true);
+        frozen = true;
     }
 
     void init(uint32_t ack_seq) {
@@ -143,8 +143,11 @@ public:
 
     void free_to_pos(uint32_t pos);
 
-    uint16_t copy_for_retransmit(char *data, uint16_t size);
-
+    void reset() {
+        std::lock_guard<std::mutex> lock(mutex);
+        len_sent = 0;
+        retransmit = false;
+    }
 
     bool is_empty() {
         std::lock_guard<std::mutex> lock(mutex);
@@ -180,7 +183,7 @@ public:
 
     void set_retransmit(bool need) {
         std::lock_guard<std::mutex> lock(mutex);
-        if (frozen.load()) {
+        if (frozen) {
             return;
         }
 

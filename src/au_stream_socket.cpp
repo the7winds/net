@@ -16,7 +16,7 @@ const static tcp_packet z_tcp = {0};
 template <uint16_t buf_size>
 uint16_t send_buffer<buf_size>::write(const void* data, uint16_t l) {
     std::lock_guard<std::mutex> lock(mutex);
-    if (frozen.load()) {
+    if (frozen) {
         return 0;
     }
 
@@ -35,7 +35,7 @@ uint16_t send_buffer<buf_size>::write(const void* data, uint16_t l) {
 template <uint16_t buf_size>
 uint16_t send_buffer<buf_size>::copy_for_transmit(char *data, uint16_t size) {
     std::lock_guard<std::mutex> lock(mutex);
-    if (frozen.load()) {
+    if (frozen) {
         return 0;
     }
 
@@ -52,23 +52,9 @@ uint16_t send_buffer<buf_size>::copy_for_transmit(char *data, uint16_t size) {
 
 
 template <uint16_t buf_size>
-uint16_t send_buffer<buf_size>::copy_for_retransmit(char *data, uint16_t size) {
-    std::lock_guard<std::mutex> lock(mutex);
-
-    uint16_t copy = std::min(size, len_sent);
-
-    for (uint16_t i = 0; i < copy; ++i) {
-        data[i] = buf[(begin + i) % buf_size];
-    }
-
-    return copy;
-}
-
-
-template <uint16_t buf_size>
 void send_buffer<buf_size>::free_to_pos(uint32_t pos) {
     std::lock_guard<std::mutex> lock(mutex);
-    if (frozen.load()) {
+    if (frozen) {
         return;
     }
 
@@ -182,24 +168,9 @@ void au_stream_socket::send(const void *data, size_t size) {
 
 /* retransmits the oldest segment */
 void au_stream_socket::retransmit() {
-    tcp_packet send_packet = z_tcp;
-
-    if (!send_buf.need_retransmit())
-        return;
-
-    uint16_t max_send_size = std::min((uint16_t) window.load(), (uint16_t) TCP_MAX_SEG);
-
-    send_packet.header.seq = send_buf.get_seq();
-    uint16_t copied = std::max((uint16_t) 1, send_buf.copy_for_retransmit(send_packet.data, max_send_size));
-    send_buf.set_retransmit(false);
-
-    // TODO do something with zero
-    if (copied) {
-        try_send(sk_send, send_packet, sizeof(tcphdr) + copied);
-        logger.debug("%d:%d: retransmit seq %d size %d",
-                     connection.my_port, connection.other_port, send_packet.header.seq, copied);
-    } else {
-        return;
+    logger.debug("%d:%d: reset transmitted", connection.my_port, connection.other_port);
+    if (send_buf.need_retransmit()) {
+        send_buf.reset();
     }
 }
 
