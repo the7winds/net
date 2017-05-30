@@ -67,6 +67,10 @@ struct connection_t {
 
 int open_socket();
 
+void fix_au_port(au_port port);
+void free_au_port(au_port port);
+
+
 class timer {
     uint64_t lim;
     std::chrono::time_point<std::chrono::high_resolution_clock> start;

@@ -36,6 +36,8 @@ int main(int argc, char **argv) {
         ip = argv[1];
 
     try {
+        fix_au_port(my_port);
+
         TradeClient tradeClient(ip, my_port, server_port);
         tradeClient.start();
 
@@ -74,6 +76,8 @@ int main(int argc, char **argv) {
                 std::cerr << HELP_MSG;
             }
         }
+
+	free_au_port(my_port);
     } catch (std::exception &e) {
         /*
          * здесь мы окажемся если обработка какого-нибудь запроса прошла неверно
