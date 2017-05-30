@@ -27,6 +27,10 @@ void TradeClient::lotDetails(uint32_t lotId) {
     received.readFromStreamSocket(sk);
     if (received.getBody()->getType() == Body::BodyType::BYE)
         throw std::runtime_error("server closed");
+    if (received.getBody()->getType() == Body::BodyType::STATUS) {
+	std::cerr << "invalid request\n";
+	return;
+    }
 
     LotDetailsResponse *lotDetailsResponse = (LotDetailsResponse *) received.getBody();
     const LotFullInfo &lotFullInfo = lotDetailsResponse->getLotDetails();

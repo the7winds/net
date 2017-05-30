@@ -25,15 +25,20 @@ int main(int argc, char **argv) {
     uint32_t newPrice;
     std::string description;
     const char* ip = DEFAULT_ADDR;
-    tcp_port port = DEFAULT_PORT;
+    tcp_port server_port = DEFAULT_PORT;
+    tcp_port my_port = 1;
 
+    if (argc > 3)
+        server_port = atoi(argv[3]);
     if (argc > 2)
-        port = atoi(argv[2]);
+        my_port = atoi(argv[2]);
     if (argc > 1)
         ip = argv[1];
 
     try {
-        TradeClient tradeClient(ip, port);
+        fix_au_port(my_port);
+
+        TradeClient tradeClient(ip, my_port, server_port);
         tradeClient.start();
 
         while (true) {
@@ -71,6 +76,8 @@ int main(int argc, char **argv) {
                 std::cerr << HELP_MSG;
             }
         }
+
+	free_au_port(my_port);
     } catch (std::exception &e) {
         /*
          * здесь мы окажемся если обработка какого-нибудь запроса прошла неверно

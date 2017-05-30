@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <signal.h>
 #include "trade_server.h"
 
 
@@ -25,8 +26,12 @@ static void lotDetailsRequestHandler(stream_socket *sk, Packet *packet, TradeCon
 
     LotDetailsRequest *request = (LotDetailsRequest *) packet->getBody();
     uint32_t lotId = request->getLotId();
-    LotFullInfo lotFullInfo = context->getDataStorage()->getLotInfoById(lotId);
-    Packet::constructLotDetailsResponse(lotFullInfo).writeToStreamSocket(sk);
+    try {
+        LotFullInfo lotFullInfo = context->getDataStorage()->getLotInfoById(lotId);
+        Packet::constructLotDetailsResponse(lotFullInfo).writeToStreamSocket(sk);
+    } catch (...) {
+        Packet::constructStatus(false).writeToStreamSocket(sk);
+    }
 }
 
 
@@ -88,7 +93,7 @@ void TradeServer::listenConnection() {
     try {
         std::cerr << "start listen connections\n";
 
-        while (true) {
+        while (!closed.load()) {
             stream_socket *streamSocket = serverSocket->accept_one_client();
             connections.push_back(new TradeConnection(streamSocket, &dataStorage));
         }
@@ -110,7 +115,8 @@ void TradeServer::start() {
 
 TradeServer::~TradeServer() {
     std::cerr << "server closes\n";
-    serverSocket->close();
+    closed.store(true);
+    kill(0, SIGUSR1);
     listenerThread.join();
     for (auto i = connections.begin(); i != connections.end(); ++i) {
         delete *i;
@@ -130,7 +136,7 @@ uint32_t DataStorage::addNewUser() {
 
 LotFullInfo DataStorage::getLotInfoById(uint32_t lotId) {
     std::unique_lock<std::mutex> lock(mtx);
-    return lotsData[lotId];
+    return lotsData.at(lotId);
 }
 
 

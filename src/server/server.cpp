@@ -11,6 +11,8 @@ int main(int argc, char** argv) {
     if (argc > 1)
         ip = argv[1];
 
+    fix_au_port(port);
+
     TradeServer tradeServer(ip, port);
     tradeServer.start();
 
@@ -20,6 +22,8 @@ int main(int argc, char** argv) {
         if (input == QUIT)
             break;
     }
+
+    free_au_port(port);
 
     return 0;
 }
